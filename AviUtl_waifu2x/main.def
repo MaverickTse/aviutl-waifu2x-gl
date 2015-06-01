@@ -1,0 +1,3 @@
+LIBRARY AviUtl_waifu2x_gl
+EXPORTS
+	GetFilterTable @1

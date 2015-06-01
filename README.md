@@ -2,7 +2,7 @@
 AviUtl port for the upscaling algorithm, waifu2x. OpenGL version.
 
 ## Binary Download
-[HERE](https://github.com/MaverickTse/aviutl-waifu2x-gl/releases/download/v0001/aviutl-waifu2x-gl-v0002.7z)
+[HERE](https://github.com/MaverickTse/aviutl-waifu2x-gl/releases/download/v0001/aviutl-waifu2x-gl-v0003.7z)
 or visit the Release Page
 
 ## Installation

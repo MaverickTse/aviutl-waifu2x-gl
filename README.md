@@ -16,6 +16,10 @@ Put everything in your AviUtl installation folder and keep the archive's folder 
 * AviUtl 0.99m or later
 * Intel HD3000 or better video card/chipset
 
+## Speed
+On Core-i7-2600k,8 threads, EVGA GTX570 SC:
+* 640x360 → 1280x720 upscale only = 9273ms (~0.11fps)
+* 320x320 → 640x640 weak denoise+upscale = 5491ms (~0.18fps)
 
 ## Known Bug
 * Currently it can only do 2X upscaling. So the _Scaling_ slider is merely an ON/OFF switch for scaling... but does anyone really need 1.6X?

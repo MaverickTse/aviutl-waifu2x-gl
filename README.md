@@ -18,16 +18,16 @@ Put everything in your AviUtl installation folder and keep the archive's folder 
 
 ## Speed
 On Core-i7-2600k,8 threads, EVGA GTX570 SC:
-* 640x360 → 1280x720 upscale only = 9273ms (~0.11fps)
-* 320x320 → 640x640 weak denoise+upscale = 5491ms (~0.18fps)
+* 640x360 → 1280x720 upscale only = 7321~9273ms (~0.12fps)
+* 320x320 → 640x640 weak denoise+upscale = 4372~5491ms (~0.2fps)
 
 ## Known Bug
-* Currently it can only do 2X upscaling. So the _Scaling_ slider is merely an ON/OFF switch for scaling... but does anyone really need 1.6X?
 * The GLSL scripts might not work on all machines!
 
 
 ## Implemented behaviour
-If the upscaled image is larger than the max resolution in your AviUtl setting, it clips off the right and bottom.
+* If the upscaled image is larger than the max resolution in your AviUtl setting, it clips off the right and bottom.
+* Suggest to leave the _Block_ slider alone. Increasing this value too much will slow down operation.
 
 ## For Developers
 * To build this yourself, you first need to get OpenCV3, GLEL and GLFW. Personally I have trimmed a lot of stuff from OpenCV and packed everything as a single DLL using the _world_ module.

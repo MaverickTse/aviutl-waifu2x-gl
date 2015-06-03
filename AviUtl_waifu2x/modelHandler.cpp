@@ -1,8 +1,8 @@
-﻿
+﻿#define NOMINMAX
+#include <Windows.h>
 #include "modelHandler.hpp"
 #include <fstream>
 #include <thread>
-#include <Windows.h>
 
 namespace w2xc {
 
@@ -21,10 +21,12 @@ Model::Model(picojson::object &jsonObj) {
 			static_cast<int>(jsonObj["nOutputPlane"].get<double>());
 	if ((kernelSize = static_cast<int>(jsonObj["kW"].get<double>()))
 			!= static_cast<int>(jsonObj["kH"].get<double>())) {
-		MessageBox(NULL, "Error : Model-Constructor : \n"
+		/*std::cerr
+				<< "Error : Model-Constructor : \n"
 				"kernel in model is not square.\n"
-				"stop.", "ERROR", MB_OK);
-				
+				"stop."
+				<< std::endl;*/
+		MessageBox(NULL, "Kernel in model is not square.", "ERROR: Model-Constructor", MB_OK | MB_ICONSTOP);
 		std::exit(-1);
 	} // kH == kW
 
@@ -32,10 +34,11 @@ Model::Model(picojson::object &jsonObj) {
 	biases = std::vector<double>(nOutputPlanes, 0.0);
 
 	if (!loadModelFromJSONObject(jsonObj)) {
-		MessageBox(NULL, "Error : Model-Constructor : \n"
+		/*std::cerr << "Error : Model-Constructor : \n"
 				"something error has been occured in loading model from JSON-Object.\n"
-				"stop.", "ERROR", MB_OK);
-		
+				"stop."
+				<< std::endl;*/
+		MessageBox(NULL, "Something wrong when loading model from JSON-Object.", "ERROR: Model-Constructor", MB_OK | MB_ICONSTOP);
 		std::exit(-1);
 	}
 
@@ -96,8 +99,8 @@ bool modelUtility::generateModelFromJSON(const std::string &fileName,
 
 	jsonFile.open(fileName);
 	if (!jsonFile.is_open()) {
-		MessageBox(NULL, fileName.c_str(), "Cannot open the file:", MB_OK);
 		//std::cerr << "Error : couldn't open " << fileName << std::endl;
+		MessageBox(NULL, fileName.c_str(), "ERROR: cannot open file", MB_OK | MB_ICONERROR);
 		return false;
 	}
 
@@ -105,16 +108,14 @@ bool modelUtility::generateModelFromJSON(const std::string &fileName,
 	jsonFile >> jsonValue;
 	std::string errMsg = picojson::get_last_error();
 	if (!errMsg.empty()) {
-		MessageBox(NULL, errMsg.c_str(), "Error : PicoJSON Error : ", MB_OK);
 		//std::cerr << "Error : PicoJSON Error : " << errMsg << std::endl;
+		MessageBox(NULL, errMsg.c_str(), "ERROR: PicoJSON", MB_OK | MB_ICONERROR);
 		return false;
 	}
 
 	picojson::array& objectArray = jsonValue.get<picojson::array>();
 	for (auto&& obj : objectArray) {
-		std::unique_ptr<Model> m = std::unique_ptr<Model>(
-				new Model(obj.get<picojson::object>()));
-		models.push_back(std::move(m));
+		models.emplace_back(new Model(obj.get<picojson::object>()));
 	}
 
 	return true;
@@ -132,12 +133,11 @@ Model::Model(std::istream& binFile) {
 	biases = std::vector<double>(nOutputPlanes, 0.0);
 
 	if (!loadModelFromBin(binFile)) {
-		MessageBox(NULL,"something error has been occured in loading model from Binary File.\n"
-				"stop." , "Error : Model-Constructor :", MB_OK);
-		//std::cerr << "Error : Model-Constructor : \n"
-		//		"something error has been occured in loading model from Binary File.\n"
-		//		"stop."
-		//		<< std::endl;
+		/*std::cerr << "Error : Model-Constructor : \n"
+				"something error has been occured in loading model from Binary File.\n"
+				"stop."
+				<< std::endl;*/
+		MessageBox(NULL, "Something wrong when loading model from binary file.", "ERROR: Model-Constructor", MB_OK | MB_ICONSTOP);
 		std::exit(-1);
 	}
 
@@ -200,6 +200,16 @@ bool Model::saveModelToBin(std::ostream& binFile)
 	return true;
 }
 
+
+modelUtility * modelUtility::instance = nullptr;
+
+modelUtility& modelUtility::getInstance(){
+	if(instance == nullptr){
+		instance = new modelUtility();
+	}
+	return *instance;
+}
+
 bool modelUtility::generateModelFromBin(const std::string &fileName,
 	std::vector<std::unique_ptr<Model> > &models) {
 	
@@ -207,8 +217,8 @@ bool modelUtility::generateModelFromBin(const std::string &fileName,
 
 	binFile.open(fileName, std::ios::binary);
 	if (!binFile.is_open()) {
-		MessageBox(NULL, fileName.c_str(), "Cannot open file:", MB_OK);
 		//std::cerr << "Error : couldn't open " << fileName << std::endl;
+		MessageBox(NULL, fileName.c_str(), "ERROR: cannot open file:", MB_OK | MB_ICONERROR);
 		return false;
 	}
 	
@@ -228,8 +238,8 @@ bool modelUtility::saveModelToBin(const std::string &fileName,
 
 	binFile.open(fileName, std::ios::binary);
 	if (!binFile.is_open()) {
-		MessageBox(NULL, fileName.c_str(), "Cannot open file:", MB_OK);
 		//std::cerr << "Error : couldn't open " << fileName << std::endl;
+		MessageBox(NULL, fileName.c_str(), "ERROR: cannot open file:", MB_OK | MB_ICONERROR);
 		return false;
 	}
 	
@@ -242,12 +252,40 @@ bool modelUtility::saveModelToBin(const std::string &fileName,
 	return true;
 }
 
+
+bool modelUtility::setNumberOfJobs(int setNJob){
+	if(setNJob < 1)return false;
+	nJob = setNJob;
+	return true;
+};
+
+int modelUtility::getNumberOfJobs(){
+	return nJob;
+}
+
+bool modelUtility::setBlockSize(cv::Size size){
+	if(size.width < 0 || size.height < 0)return false;
+	blockSplittingSize = size;
+	return true;
+}
+
+bool modelUtility::setBlockSizeExp2Square(int exp){
+	if(exp < 0)return false;
+	int length = (int)std::pow(2, exp);
+	blockSplittingSize = cv::Size(length, length);
+	return true;
+}
+
+cv::Size modelUtility::getBlockSize(){
+	return blockSplittingSize;
+}
+
 // for debugging
 
 void Model::printWeightMatrix() {
 
 	for (auto&& weightMatrix : weights) {
-		//std::cout << weightMatrix << std::endl;
+		std::cout << weightMatrix << std::endl;
 	}
 
 }
@@ -255,7 +293,7 @@ void Model::printWeightMatrix() {
 void Model::printBiases() {
 
 	for (auto&& bias : biases) {
-		//std::cout << bias << std::endl;
+		std::cout << bias << std::endl;
 	}
 }
 

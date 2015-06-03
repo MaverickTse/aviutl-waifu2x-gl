@@ -8,17 +8,18 @@
 #include <cmath>
 #include "picojson.h"
 #include "modelHandler.hpp"
-#include "filterGL.h"
+#include "convertRoutine.hpp"
+//#include "filterGL.h"
 #include "filter.h"
 
 //---------------------------------------------------------------------
 //		フィルタ構造体定義
 //---------------------------------------------------------------------
-#define	TRACK_N	3														//	トラックバーの数
-TCHAR	*track_name[] = { "Denoise", "Scaling", "Threads" };	//	トラックバーの名前
-int		track_default[] = { 0, 200, 4 };	//	トラックバーの初期値
-int		track_s[] = { 0, 100, 1 };	//	トラックバーの下限値
-int		track_e[] = { 2, 200, 16 };	//	トラックバーの上限値
+#define	TRACK_N	4														//	トラックバーの数
+TCHAR	*track_name[] = { "Denoise", "Scaling", "Threads","Block" };	//	トラックバーの名前
+int		track_default[] = { 0, 200, 4, 512 };	//	トラックバーの初期値
+int		track_s[] = { 0, 100, 1, 32 };	//	トラックバーの下限値
+int		track_e[] = { 2, 400, 16, 1024 };	//	トラックバーの上限値
 
 #define	CHECK_N	2														//	チェックボックスの数
 TCHAR	*check_name[] = { "HELP", "DONATE" };				//	チェックボックスの名前
@@ -101,12 +102,15 @@ BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 	cv::Mat utlSrc(fpip->h, fpip->w, CV_16SC3, fpip->ycp_edit, fpip->max_w * 3 * sizeof(short));
 	//Convert to float32 data type
 	cv::Mat SrcF32;
-	utlSrc.convertTo(SrcF32, CV_32FC3, (1.0 / 16.0)/255.0, 0); //YC48 is 16x oversampled. 
+	utlSrc.convertTo(SrcF32, CV_32FC3, (1.0 / 16.0)/255.0, 0); //YC48 is 16x oversampled.
+	//Set block size
+	int blockSize = fp->track[3];
+	w2xc::modelUtility::getInstance().setBlockSize(cv::Size(blockSize, blockSize));
 	
 	//Denoise
 	if (fp->track[0] > 0) //When denoise enabled, its slider value is either 1(weak) or 2(strong)
 	{
-		filterGLInit(SrcF32.size().width, SrcF32.size().height); //init OpenGL
+		//filterGLInit(SrcF32.size().width, SrcF32.size().height); //init OpenGL
 		std::string modelFileName("models/noise");
 		//set denoise model file
 		modelFileName = modelFileName + std::to_string(fp->track[0]) + "_model.bin";
@@ -114,16 +118,16 @@ BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 		if (!w2xc::modelUtility::generateModelFromBin(modelFileName, models))
 			return FALSE;
 		//set njob
-		for (auto&& model : models) {
+		/*for (auto&& model : models) {
 			model->setNumberOfJobs(cv::min(fp->track[2],cv::getNumberOfCPUs())); //may need to verify the behaviour of cv::getNumberOfCPU()
-		}
+		}*/
 		//Split planes
 		std::vector<cv::Mat> imageSplit;
 		cv::Mat imageY;
 		cv::split(SrcF32, imageSplit);
 		imageSplit[0].copyTo(imageY);
 		//Set input/output planes
-		std::unique_ptr<std::vector<cv::Mat> > inputPlanes = std::unique_ptr<
+		/*std::unique_ptr<std::vector<cv::Mat> > inputPlanes = std::unique_ptr<
 			std::vector<cv::Mat> >(new std::vector<cv::Mat>());
 		std::unique_ptr<std::vector<cv::Mat> > outputPlanes = std::unique_ptr<
 			std::vector<cv::Mat> >(new std::vector<cv::Mat>());
@@ -145,13 +149,14 @@ BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 				outputPlanes = std::unique_ptr<std::vector<cv::Mat> >(
 					new std::vector<cv::Mat>());
 			}
-		}
+		}*/
+		w2xc::convertWithModels(imageY, imageSplit[0], models);
 		//End denoise
-		outputPlanes->at(0).copyTo(imageSplit[0]); //Update Y-channel
+		//outputPlanes->at(0).copyTo(imageSplit[0]); //Update Y-channel
 		cv::merge(imageSplit, SrcF32); 
 		//cv::cvtColor(imageYUV, image, COLOR_YUV2RGB);
 
-		filterGLRelease();
+		//filterGLRelease();
 	}
 
 	//*************** SCALING ***************************//
@@ -173,15 +178,15 @@ BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 		if (!w2xc::modelUtility::generateModelFromBin(modelFileName, models))
 			return FALSE;
 		//Set njob
-		for (auto&& model : models) {
+		/*for (auto&& model : models) {
 			model->setNumberOfJobs(cv::min(fp->track[2], cv::getNumberOfCPUs())); //may need to verify the behaviour of cv::getNumberOfCPU()
-		}
+		}*/
 		//Ready to scale
 		//std::string titlemsg("");
 		//titlemsg = titlemsg + "Scale: " + std::to_string(fp->track[1]) + " Th: " + std::to_string(cv::min(fp->track[2], cv::getNumberOfCPUs()));
 		//SetWindowText(fp->hwnd, titlemsg.c_str());
 		//Starts scaling
-		filterGLInit(SrcF32.size().width*2, SrcF32.size().height*2);
+		//filterGLInit(SrcF32.size().width*2, SrcF32.size().height*2);
 
 		// 2x scaling
 		for (int nIteration = 0; nIteration < iterTimesTwiceScaling;
@@ -205,7 +210,7 @@ BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 			cv::resize(SrcF32, image2xBicubic, imageSize, 0, 0, cv::INTER_CUBIC);
 			cv::split(image2xBicubic, imageSplit);
 
-			std::unique_ptr<std::vector<cv::Mat> > inputPlanes =
+			/*std::unique_ptr<std::vector<cv::Mat> > inputPlanes =
 				std::unique_ptr<std::vector<cv::Mat> >(
 				new std::vector<cv::Mat>());
 			std::unique_ptr<std::vector<cv::Mat> > outputPlanes =
@@ -227,12 +232,25 @@ BOOL func_proc(FILTER *fp, FILTER_PROC_INFO *fpip)
 				}
 			}
 
-			outputPlanes->at(0).copyTo(imageSplit[0]);
+			outputPlanes->at(0).copyTo(imageSplit[0]);*/
+			if (!w2xc::convertWithModels(imageY, imageSplit[0], models)){
+				MessageBox(fp->hwnd, "Something wrong with w2xc::convertWithModels", "ERROR", MB_OK | MB_ICONSTOP);
+				std::exit(1);
+			}
 			cv::merge(imageSplit, SrcF32);
-			
+			if (shrinkRatio != 0.0){
+				cv::Size lastImageSize = SrcF32.size();
+				lastImageSize.width =
+					static_cast<int>(static_cast<double>(lastImageSize.width
+					* shrinkRatio));
+				lastImageSize.height =
+					static_cast<int>(static_cast<double>(lastImageSize.height
+					* shrinkRatio));
+				cv::resize(SrcF32, SrcF32, lastImageSize, 0, 0, cv::INTER_AREA);
+			}
 
 		} // 2x scaling : end
-		filterGLRelease();
+		//filterGLRelease();
 	}
 	//Send back to AviUtl, clip max size
 	int fWidth, fHeight;
@@ -265,9 +283,11 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void *e
 				"0: Turn off denoise\n"
 				"1: Weak denoise\n"
 				"2: Strong denoise\n"
-				"Scaling: a magnification percentage from 100% to 200%\n"
-				"Thread: set the degree of multi-threading. If the set value is too high,\n it falls back to max number of CPU cores.\n"
+				"Scaling: a magnification percentage from 100% to 400%\n"
+				"Thread: (Dummy slider at this moment. No effect)\n"
+				"Block: Image splitting block size.\n Larger value process faster but takes more video memory.\n\n"
 				"Technical Note\n"
+				"=================\n"
 				"*All processing are done in YUV color space\n"
 				"*Only the Y-plane is scaled using machine-learned data\n"
 				"*UV-planes use standard bicubic\n\n"

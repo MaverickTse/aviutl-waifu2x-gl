@@ -27,6 +27,9 @@
     <ClInclude Include="picojson.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="convertRoutine.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -42,6 +45,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="modelHandlerFilterGL.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="convertRoutine.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

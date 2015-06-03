@@ -1,10 +1,9 @@
-﻿
+﻿#define NOMINMAX
+#include <Windows.h>
 #include "modelHandler.hpp"
 // #include <iostream> in modelHandler.hpp
 #include <fstream>
 #include <thread>
-#define NOMINMAX
-#include <Windows.h>
 
 namespace w2xc {
 
@@ -12,11 +11,11 @@ bool Model::filter(std::vector<cv::Mat> &inputPlanes,
 		std::vector<cv::Mat> &outputPlanes) {
 
 	if (inputPlanes.size() != nInputPlanes) {
-		MessageBox(NULL, "number of input planes mismatch.", "Error : Model-filter : \n", MB_OK);
-		//std::cerr << "Error : Model-filter : \n"
-		//		"number of input planes mismatch." << std::endl;
-		//std::cerr << inputPlanes.size() << ","
-		//		<< nInputPlanes << std::endl;
+		/*std::cerr << "Error : Model-filter : \n"
+				"number of input planes mismatch." << std::endl;
+		std::cerr << inputPlanes.size() << ","
+				<< nInputPlanes << std::endl;*/
+		MessageBox(NULL, "Number of input planes mismatch.", "ERROR: Model-Filter", MB_OK);
 		return false;
 	}
 
@@ -72,7 +71,7 @@ bool Model::filterWorker(std::vector<cv::Mat> &inputPlanes,
 	// filter processing
 	// input : inputPlanes
 	// kernel : weightMatrices
-	for (int opIndex = beginningIndex; opIndex < (beginningIndex + nWorks);
+	for (unsigned int opIndex = beginningIndex; opIndex < (beginningIndex + nWorks);
 			opIndex++) {
 
 		int wMatIndex = nInputPlanes * opIndex;

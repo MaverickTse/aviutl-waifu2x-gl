@@ -70,13 +70,15 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(ProjectDir)GLFW\include\;$(ProjectDir)GLEL\include\;$(ProjectDir)OCV\include\;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <EnableEnhancedInstructionSet>StreamingSIMDExtensions3</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
       <FloatingPointModel>Fast</FloatingPointModel>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <Cpp0xSupport>true</Cpp0xSupport>
       <OptimizeForWindowsApplication>true</OptimizeForWindowsApplication>
-      <Parallelization>true</Parallelization>
+      <Parallelization>
+      </Parallelization>
       <UseProcessorExtensions>SSE42</UseProcessorExtensions>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -90,12 +92,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="convertRoutine.hpp" />
     <ClInclude Include="filter.h" />
     <ClInclude Include="filterGL.h" />
     <ClInclude Include="modelHandler.hpp" />
     <ClInclude Include="picojson.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="convertRoutine.cpp" />
     <ClCompile Include="filterGL.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="modelHandler.cpp" />
